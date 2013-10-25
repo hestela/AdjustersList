@@ -1,0 +1,4 @@
+#git ignore for AdjustersList
+
+#compiled class files
+*.class
