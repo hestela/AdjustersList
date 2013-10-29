@@ -15,6 +15,10 @@ import java.awt.event.ActionEvent;
 
 public class DBError extends JDialog {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private final JPanel contentPanel = new JPanel();
 
 	/**
@@ -39,6 +43,7 @@ public class DBError extends JDialog {
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
 		contentPanel.setLayout(null);
+		this.setResizable(false);
 		{
 			JLabel lblNewLabel = new JLabel("Error connecting to DB!");
 			lblNewLabel.setForeground(Color.RED);

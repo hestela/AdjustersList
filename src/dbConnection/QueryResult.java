@@ -1,6 +1,6 @@
 package dbConnection;
 
-public class QueryResult implements Comparable<QueryResult>{
+public class QueryResult{
 	private String company, name, phone, fax;
 	
 	public QueryResult(String company,String name,String phone,String fax){
@@ -8,6 +8,10 @@ public class QueryResult implements Comparable<QueryResult>{
 		this.name 		= name;
 		this.phone 		= phone;
 		this.fax 		= fax;
+	}
+
+	public String[] getObjArray(){
+		return new String[] {company, name, phone, fax};
 	}
 
 	public String getCompany() {
@@ -24,16 +28,6 @@ public class QueryResult implements Comparable<QueryResult>{
 
 	public String getFax() {
 		return fax;
-	}
-
-	@Override
-	public int compareTo(QueryResult rhs) {
-		return this.name.compareTo(rhs.getName());
-	}
-
-	public Object getPriority() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 }

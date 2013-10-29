@@ -5,9 +5,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import ca.odell.glazedlists.BasicEventList;
-import ca.odell.glazedlists.EventList;
+import java.util.ArrayList;
 
 public class SQLiteJDBC {
 	
@@ -40,8 +38,8 @@ public class SQLiteJDBC {
 
 				// Make sure we have the table we need
 				Statement statement = connection.createStatement();
-				statement.setQueryTimeout(30); 
-				statement.executeUpdate("CREATE TABLE IF NOT EXISTS adjusters (company TEXT, name TEXT, phone TEXT, fax TEXT)");
+				statement.setQueryTimeout(10); 
+				statement.executeUpdate(makeQueryString(null, QueryType.CREATE, null));
 			}
 			catch(SQLException e){
 				e.printStackTrace();
@@ -61,16 +59,16 @@ public class SQLiteJDBC {
 		}
 	}
 
-	public EventList<QueryResult> getDbData(){
+	public ArrayList<QueryResult> getDbData(){
 		
 		try{
 			// Make a result ArrayList
-			EventList<QueryResult> result = new BasicEventList<QueryResult>();
+			ArrayList<QueryResult> result = new ArrayList<QueryResult>();
 			
 			// Ask the DB for all of its data in the adjusters table
 			Statement statement = connection.createStatement();
-			statement.setQueryTimeout(30);
-			ResultSet rs = statement.executeQuery("select * from adjusters");
+			statement.setQueryTimeout(10);
+			ResultSet rs = statement.executeQuery(makeQueryString(null, QueryType.SELECT, null));
 			
 			while(rs.next()){
 				// Make a new QueryResult and place it in the result ArrayList
@@ -91,45 +89,41 @@ public class SQLiteJDBC {
 	
 	public void insertData(String company,String name,String phone,String fax){
 		try{
+			// Setup query
 			Statement statement = connection.createStatement();
-			statement.setQueryTimeout(30);
+			statement.setQueryTimeout(10);
 			
+			// Attempt to get data
 			String queryData = "('" + company + "','" + name + "','" + phone + "','" + fax + "')";
-			statement.executeUpdate("insert into adjusters values" + queryData);
+			statement.executeUpdate(makeQueryString(null, QueryType.INSERT, queryData));
 		}
 		catch(SQLException e){
 			e.printStackTrace();
 		}
 	}
 	
-	public void updateRow(int rowID, UpdateType type, String newData){
+	public void updateRow(QueryResult updateQuery, QueryType type, String newData){
 		try{
 			// Setup query
 			Statement statement = connection.createStatement();
-			statement.setQueryTimeout(30);
-			String queryData;
+			statement.setQueryTimeout(10);
 			
 			// Execute appropriate query
 			switch (type){
 				case COMPANY:
-					queryData = "company='" + newData + "' WHERE rowid=" + rowID;
-					statement.executeUpdate("UPDATE adjusters SET " + queryData);
-					break;
-					
+					statement.executeUpdate(makeQueryString(updateQuery, QueryType.COMPANY, newData));
+					break;				
 				case NAME:
-					queryData = "name='" + newData + "' WHERE rowid=" + rowID;
-					statement.executeUpdate("UPDATE adjusters SET " + queryData);
-					break;
-					
+					statement.executeUpdate(makeQueryString(updateQuery, QueryType.NAME, newData));
+					break;				
 				case PHONE:
-					queryData = "phone='" + newData + "' WHERE rowid=" + rowID;
-					statement.executeUpdate("UPDATE adjusters SET " + queryData);
-					break;
-					
+					statement.executeUpdate(makeQueryString(updateQuery, QueryType.PHONE, newData));
+					break;				
 				case FAX:
-					queryData = "fax='" + newData + "' WHERE rowid=" + rowID;
-					statement.executeUpdate("UPDATE adjusters SET " + queryData);
+					statement.executeUpdate(makeQueryString(updateQuery, QueryType.FAX, newData));
 					break;
+			default:
+				break;
 			}	
 			
 		}
@@ -137,6 +131,76 @@ public class SQLiteJDBC {
 			e.printStackTrace();
 		}
 	}
+	
+	public void deleteRows(ArrayList<QueryResult> rows){
+		
+		Statement statement;
+		try {
+			// Setup query
+			statement = connection.createStatement();
+			statement.setQueryTimeout(30);
+			
+			// Attempt to delete all rows
+			for(QueryResult row: rows)
+			{
+				statement.executeUpdate(makeQueryString(row, QueryType.DELETE, null));
+			}
+				
+		} catch (SQLException e) {
+			// Tried to delete invalid data?
+			e.printStackTrace();
+		}
+
+		
+	}
+	
+	private String makeQueryString(QueryResult query, QueryType type, String newData){
+		String queryData = "";
+		
+		// Create appropriate query string
+		switch (type){
+		case COMPANY:
+			queryData = "DELETE FROM adjusters WHERE company='" + query.getCompany() 
+			+ "' AND name='" + query.getName()
+			+ "' AND phone='" + query.getPhone()
+			+ "' AND fax='" + query.getFax() + "'";
+			break;	
+		case NAME:
+			queryData = "DELETE FROM adjusters WHERE name='" + query.getCompany() 
+			+ "' AND name='" + query.getName()
+			+ "' AND phone='" + query.getPhone()
+			+ "' AND fax='" + query.getFax() + "'";
+			break;	
+		case PHONE:
+			queryData = "DELETE FROM adjusters WHERE phone='" + query.getCompany() 
+			+ "' AND name='" + query.getName()
+			+ "' AND phone='" + query.getPhone()
+			+ "' AND fax='" + query.getFax() + "'";
+			break;
+		case FAX:
+			queryData = "DELETE FROM adjusters WHERE fax='" + query.getCompany() 
+			+ "' AND name='" + query.getName()
+			+ "' AND phone='" + query.getPhone()
+			+ "' AND fax='" + query.getFax() + "'";
+			break;
+		case DELETE:
+			queryData = "DELETE FROM adjusters WHERE delete='" + query.getCompany() 
+			+ "' AND name='" + query.getName()
+			+ "' AND phone='" + query.getPhone()
+			+ "' AND fax='" + query.getFax() + "'";
+			break;
+		case CREATE:
+			queryData = "CREATE TABLE IF NOT EXISTS adjusters (company TEXT, name TEXT, phone TEXT, fax TEXT)";
+			break;
+		case INSERT:
+			queryData = "INSERT into adjusters values " + newData;
+			break;
+		case SELECT:
+			queryData = "SELECT * FROM adjusters";
+			break;
+		}
+		return queryData;
+	}	
 	
 	public void closeConnection(){
 		try {
