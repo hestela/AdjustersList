@@ -59,11 +59,11 @@ public class SQLiteJDBC {
 		}
 	}
 
-	public ArrayList<QueryResult> getDbData(){
+	public ArrayList<QueryData> getDbData(){
 		
 		try{
 			// Make a result ArrayList
-			ArrayList<QueryResult> result = new ArrayList<QueryResult>();
+			ArrayList<QueryData> result = new ArrayList<QueryData>();
 			
 			// Ask the DB for all of its data in the adjusters table
 			Statement statement = connection.createStatement();
@@ -72,7 +72,7 @@ public class SQLiteJDBC {
 			
 			while(rs.next()){
 				// Make a new QueryResult and place it in the result ArrayList
-				result.add(new QueryResult(
+				result.add(new QueryData(
 								rs.getString("company"), 
 								rs.getString("name"), 
 								rs.getString("phone"), 
@@ -102,7 +102,7 @@ public class SQLiteJDBC {
 		}
 	}
 	
-	public void updateRow(QueryResult updateQuery, QueryType type, String newData){
+	public void updateRow(QueryData updateQuery, QueryType type){
 		try{
 			// Setup query
 			Statement statement = connection.createStatement();
@@ -111,16 +111,16 @@ public class SQLiteJDBC {
 			// Execute appropriate query
 			switch (type){
 				case COMPANY:
-					statement.executeUpdate(makeQueryString(updateQuery, QueryType.COMPANY, newData));
+					statement.executeUpdate(makeQueryString(updateQuery, QueryType.COMPANY, null));
 					break;				
 				case NAME:
-					statement.executeUpdate(makeQueryString(updateQuery, QueryType.NAME, newData));
+					statement.executeUpdate(makeQueryString(updateQuery, QueryType.NAME, null));
 					break;				
 				case PHONE:
-					statement.executeUpdate(makeQueryString(updateQuery, QueryType.PHONE, newData));
+					statement.executeUpdate(makeQueryString(updateQuery, QueryType.PHONE, null));
 					break;				
 				case FAX:
-					statement.executeUpdate(makeQueryString(updateQuery, QueryType.FAX, newData));
+					statement.executeUpdate(makeQueryString(updateQuery, QueryType.FAX, null));
 					break;
 			default:
 				break;
@@ -132,7 +132,7 @@ public class SQLiteJDBC {
 		}
 	}
 	
-	public void deleteRows(ArrayList<QueryResult> rows){
+	public void deleteRow(QueryData row){
 		
 		Statement statement;
 		try {
@@ -140,51 +140,45 @@ public class SQLiteJDBC {
 			statement = connection.createStatement();
 			statement.setQueryTimeout(30);
 			
-			// Attempt to delete all rows
-			for(QueryResult row: rows)
-			{
-				statement.executeUpdate(makeQueryString(row, QueryType.DELETE, null));
-			}
-				
+			// Attempt to delete row
+			statement.executeUpdate(makeQueryString(row, QueryType.DELETE, null));				
 		} catch (SQLException e) {
 			// Tried to delete invalid data?
 			e.printStackTrace();
-		}
-
-		
+		}		
 	}
 	
-	private String makeQueryString(QueryResult query, QueryType type, String newData){
+	private String makeQueryString(QueryData query, QueryType type, String newData){
 		String queryData = "";
 		
 		// Create appropriate query string
 		switch (type){
 		case COMPANY:
-			queryData = "DELETE FROM adjusters WHERE company='" + query.getCompany() 
-			+ "' AND name='" + query.getName()
+			queryData = "UPDATE adjusters SET company='" + query.getCompany() 
+			+ "' WHERE name='" + query.getName()
 			+ "' AND phone='" + query.getPhone()
 			+ "' AND fax='" + query.getFax() + "'";
 			break;	
 		case NAME:
-			queryData = "DELETE FROM adjusters WHERE name='" + query.getCompany() 
-			+ "' AND name='" + query.getName()
+			queryData = "UPDATE adjusters SET name='" + query.getName() 
+			+ "' WHERE company='" + query.getCompany()
 			+ "' AND phone='" + query.getPhone()
 			+ "' AND fax='" + query.getFax() + "'";
 			break;	
 		case PHONE:
-			queryData = "DELETE FROM adjusters WHERE phone='" + query.getCompany() 
+			queryData = "UPDATE adjusters SET phone='" + query.getPhone() 
+			+ "' WHERE company='" + query.getCompany()
 			+ "' AND name='" + query.getName()
-			+ "' AND phone='" + query.getPhone()
 			+ "' AND fax='" + query.getFax() + "'";
 			break;
 		case FAX:
-			queryData = "DELETE FROM adjusters WHERE fax='" + query.getCompany() 
+			queryData = "UPDATE adjusters SET fax='" + query.getFax() 
+			+ "' WHERE company='" + query.getCompany()
 			+ "' AND name='" + query.getName()
-			+ "' AND phone='" + query.getPhone()
-			+ "' AND fax='" + query.getFax() + "'";
+			+ "' AND phone='" + query.getPhone() + "'";
 			break;
 		case DELETE:
-			queryData = "DELETE FROM adjusters WHERE delete='" + query.getCompany() 
+			queryData = "DELETE FROM adjusters WHERE company='" + query.getCompany() 
 			+ "' AND name='" + query.getName()
 			+ "' AND phone='" + query.getPhone()
 			+ "' AND fax='" + query.getFax() + "'";

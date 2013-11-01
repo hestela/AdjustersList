@@ -2,11 +2,12 @@ package gui;
 
 import javax.swing.RowFilter;
 
-public class ContainsIgnoreCaseFilter extends RowFilter<Object, Object> {
+// Custom RowFilter made to ignore case when filtering r
+public class CaseInsensitiveFilter extends RowFilter<Object, Object> {
 
     private final String match;
 
-    public ContainsIgnoreCaseFilter(String match) {
+    public CaseInsensitiveFilter(String match) {
         this.match = match.toLowerCase();
     }
 

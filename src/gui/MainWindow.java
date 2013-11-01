@@ -2,28 +2,36 @@ package gui;
 
 import java.awt.EventQueue;
 import java.util.ArrayList;
+import java.util.Collections;
+
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import dbConnection.*;
+import dialogs.*;
+
 import javax.swing.JLabel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.TableRowSorter;
+
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+
 import javax.swing.JTextField;
 import javax.swing.JButton;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.RowFilter;
+
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.print.PrinterException;
 
 public class MainWindow {
-
 	// Declare JFrame
 	private JFrame frmAdjustersList;
 	
@@ -123,7 +131,7 @@ public class MainWindow {
 				searchField.setText("");
 				
 				// Clear filter
-				sorter.setRowFilter(new ContainsIgnoreCaseFilter(""));	
+				sorter.setRowFilter(new CaseInsensitiveFilter(""));	
 				
 				// Set main GUI state
 				setGuiState(GuiState.MAIN);
@@ -137,7 +145,6 @@ public class MainWindow {
 			public void actionPerformed(ActionEvent e) {
 				// Set add entry GUI state
 				setGuiState(GuiState.ADD);
-
 			}
 		});
 		btnAdd.setBounds(160, 445, 135, 23);
@@ -146,7 +153,29 @@ public class MainWindow {
 		btnRemove = new JButton("Remove adjuster");
 		btnRemove.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				// Get coordiantes
+				// Create an arraylist to sort the selected rows
+				ArrayList<Integer> rowList = new ArrayList<Integer>();
+				
+				// Get row numbers
+				int[] rows = dataTable.getSelectedRows();
+				
+				// Convert array to ArrayList
+				for(int row: rows){
+					rowList.add(dataTable.convertRowIndexToModel(row));
+				}
+				
+				// We want to remove the highest order rows first so we don't go out of bounds due to changing indicies
+				Collections.sort(rowList,Collections.reverseOrder());
+
+				for(int row: rowList)
+				{
+					// Delete from DB
+					connection.deleteRow(new QueryData(tableModel.getRowAt(row)));
+					tableModel.getTableModelListeners();
+					
+					// Delete from table
+					tableModel.removeRow(row);
+				}
 
 			}
 		});
@@ -162,20 +191,58 @@ public class MainWindow {
 				String phone = phoneField.getText();
 				String fax = faxField.getText();
 				
-				// Add entry to table
-				tableModel.addRow(company, name, phone, fax);
+				// Check if company or name are filled with spaces
+				String compCheck = company.replaceAll(" ", "");
+				String nameCheck = name.replaceAll(" ", "");
 				
-				// Add entry to DB
-				connection.insertData(company, name, phone, fax);
-				
-				// Clear text fields
-				companyField.setText("");
-				nameField.setText("");
-				phoneField.setText("");
-				faxField.setText("");
-				
-				// Set main GUI state
-				setGuiState(GuiState.MAIN);
+				// Check for empty company name
+				if (compCheck.equals(""))
+				{
+					// Display empty fields dialog
+					JDialog empty = new EmptyField();
+					empty.setLocationRelativeTo(frmAdjustersList);
+					empty.setVisible(true);		
+					
+					// Check which string to clear
+					if (compCheck.equals(""))
+					{
+						companyField.setText("");
+					}					
+				}
+				else
+				{
+					// Check if name field empty
+					if(nameCheck.equals(""))
+					{
+						name = "N/A";
+					}
+					// Check if phone field empty
+					if(phone.equals(""))
+					{
+						phone = "N/A";
+					}
+					
+					// Check if fax field is empty
+					if(fax.equals(""))
+					{
+						fax = "N/A";
+					}
+					
+					// Add entry to table
+					tableModel.addRow(company, name, phone, fax);
+					
+					// Add entry to DB
+					connection.insertData(company, name, phone, fax);
+					
+					// Clear text fields
+					companyField.setText("");
+					nameField.setText("");
+					phoneField.setText("");
+					faxField.setText("");
+
+					// Set main GUI state
+					setGuiState(GuiState.MAIN);
+				}				
 			}
 		});
 		btnOk.setBounds(495, 445, 89, 23);
@@ -220,16 +287,32 @@ public class MainWindow {
 				try {
 					dataTable.print();
 				} catch (PrinterException e) {
-					// TODO: display error?
+					// I'm not sure why this would happen
 				}
 			}
 		});
 		menuBar.add(mntmPrint);
 		
 		mntmHelp = new JMenuItem("Help");
+		mntmHelp.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				// Open help dialog
+				JDialog help = new Help();
+				help.setLocationRelativeTo(frmAdjustersList);
+				help.setVisible(true);
+			}
+		});
 		menuBar.add(mntmHelp);
 		
 		mntmAbout = new JMenuItem("About");
+		mntmAbout.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				// Open about dialog
+				JDialog about = new About();
+				about.setLocationRelativeTo(frmAdjustersList);
+				about.setVisible(true);
+			}
+		});
 		menuBar.add(mntmAbout);
 		
 		mntmQuit = new JMenuItem("Quit");
@@ -239,6 +322,7 @@ public class MainWindow {
 				System.exit(0);
 			}
 		});
+		menuBar.add(mntmQuit);
 		
 		// JLables
 		lblCompany = new JLabel("Company");
@@ -283,12 +367,13 @@ public class MainWindow {
 		searchField.setColumns(10);
 		searchField.setBounds(30, 446, 350, 20);
 		searchField.getDocument().addDocumentListener(new DocumentListener() {
+			// Implementing all three methods so that when any key is added or removed the filter is applied
 			@Override
 			public void changedUpdate(DocumentEvent arg0) {
 				// Get text from search field
 				String search = searchField.getText();
 				// Apply filter				
-				sorter.setRowFilter(new ContainsIgnoreCaseFilter(search));				
+				sorter.setRowFilter(new CaseInsensitiveFilter(search));				
 			}
 
 			@Override
@@ -296,7 +381,7 @@ public class MainWindow {
 				// Get text from search field
 				String search = searchField.getText();
 				// Apply filter
-				sorter.setRowFilter(new ContainsIgnoreCaseFilter(search));
+				sorter.setRowFilter(new CaseInsensitiveFilter(search));
 				
 			}
 
@@ -305,7 +390,7 @@ public class MainWindow {
 				// Get text from search field
 				String search = searchField.getText();
 				// Apply filter
-				sorter.setRowFilter(new ContainsIgnoreCaseFilter(search));
+				sorter.setRowFilter(new CaseInsensitiveFilter(search));
 				
 			}
 
@@ -316,10 +401,7 @@ public class MainWindow {
 		setGuiState(GuiState.MAIN);
 		
 		// Dummy buttons
-		// TODO: Find a better way to make the other menu elements smaller
-
-		menuBar.add(mntmQuit);
-		
+		// TODO: Find a better way to make the other menu elements smaller		
 		menuItem_1 = new JMenuItem("");
 		menuBar.add(menuItem_1);
 		
@@ -340,8 +422,8 @@ public class MainWindow {
 	}
 	
 	private void initTable(){		
-		// Local variables
-		ArrayList<QueryResult> dbRecords;
+		// Local storage for records from DB
+		ArrayList<QueryData> dbRecords;
 		
 		// Open the DB connection
 		connection = new SQLiteJDBC();
@@ -390,7 +472,44 @@ public class MainWindow {
 		
 		// Add the scroll pane to the JFrame
 		frmAdjustersList.getContentPane().add(tableScrollPane);
+		
+		tableModel.addTableModelListener(new TableModelListener(){
 
+			@Override
+			public void tableChanged(TableModelEvent e) {
+				try
+				{
+					// Get the row and column that were edited
+					int row = e.getFirstRow();
+			        int column = e.getColumn();
+			        
+			        // Get the edited row data
+			        String columnName = tableModel.getColumnName(column);
+			        String[] data = tableModel.getRowAt(row);
+			        
+			        // Notify DB of row update
+			        switch(columnName){
+			        	case "Company":
+			        		connection.updateRow(new QueryData(data), QueryType.COMPANY);
+			        		break;
+			        	case "Name":
+			        		connection.updateRow(new QueryData(data), QueryType.NAME);
+			        		break;
+			        	case "Phone":
+			        		connection.updateRow(new QueryData(data), QueryType.PHONE);
+			        		break;
+			        	case "Fax":
+			        		connection.updateRow(new QueryData(data), QueryType.FAX);
+			        		break;
+			        }	
+				}
+				catch(IndexOutOfBoundsException ex)
+				{
+					// TODO: This is probably bad, but it works. Thanks java.
+					// Without this try catch, java claims that an index like 5 is out of bounds because 5 <= 5. This only happens after a new entry is added
+				}
+			}			
+		});
 	}
 	
 	/**

@@ -1,4 +1,11 @@
-#git ignore for AdjustersList
+# git ignore for AdjustersList
 
-#compiled class files
+# compiled class files
 *.class
+
+# csv files
+*.csv
+
+# DB files
+*.db
+

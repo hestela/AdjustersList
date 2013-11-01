@@ -1,13 +1,20 @@
 package dbConnection;
 
-public class QueryResult{
+public class QueryData{
 	private String company, name, phone, fax;
 	
-	public QueryResult(String company,String name,String phone,String fax){
+	public QueryData(String company,String name,String phone,String fax){
 		this.company 	= company;
 		this.name 		= name;
 		this.phone 		= phone;
 		this.fax 		= fax;
+	}
+	
+	public QueryData(String[] data){
+		this.company 	= data[0];
+		this.name 		= data[1];
+		this.phone 		= data[2];
+		this.fax 		= data[3];
 	}
 
 	public String[] getObjArray(){

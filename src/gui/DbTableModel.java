@@ -1,6 +1,7 @@
 package gui;
 import java.util.ArrayList;
 import javax.swing.table.DefaultTableModel;
+
 import dbConnection.*;
 
 public class DbTableModel extends DefaultTableModel{
@@ -18,14 +19,14 @@ public class DbTableModel extends DefaultTableModel{
 		this.addColumn("Fax");	
 	}
 	
-	public void addDataList(ArrayList<QueryResult> tableData){
+	public void addDataList(ArrayList<QueryData> tableData){
 		// Add data to the able from ArrayList
-		for(QueryResult entry : tableData){
+		for(QueryData entry : tableData){
 			this.addRow(entry.getObjArray());
 		}
 	}
 	
-	public void addRow(QueryResult newRow){
+	public void addRow(QueryData newRow){
 		this.addRow(newRow.getObjArray());
 	}
 	
@@ -33,8 +34,14 @@ public class DbTableModel extends DefaultTableModel{
 		this.addRow(new String[] {company, name, phone, fax});
 	}
 	
-/*	public void removeRow(int row){
-		this.removeRow(dataTable.convertRowIndexToModel(row));
+	public String[] getRowAt(int row) {
+	     String[] result = new String[4];
+
+	     for (int colIndex = 0; colIndex < 4; colIndex++) {
+	         result[colIndex] = (String) this.getValueAt(row, colIndex);
+	     }
+
+	     return result;
 	}
-	*/
+
 }
