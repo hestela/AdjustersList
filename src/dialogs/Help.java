@@ -45,7 +45,7 @@ public class Help extends JDialog {
 
 		JLabel lblHelp = new JLabel("<html><h1>Help</h1><p>Click add adjuster to add an adjuster to the list</p>"
 				+ "<ul dir=\"ltr\"><li>Then you can click Ok to add the new adjuster or click cancel</li></ul>"
-				+ "<p dir=\"ltr\">To remove adjusters select them and then clikc remove adjuster</p>"
+				+ "<p dir=\"ltr\">To remove adjusters select them and then click remove adjuster</p>"
 				+ "<p dir=\"ltr\">To seach for an adjuster click on search and then type in the new text box</p>"
 				+ "<ul dir=\"ltr\"><li>Click cancel when done searching</li></ul>"
 				+ "<p dir=\"ltr\">To print the adjusters click on print</p>"
